@@ -1,0 +1,3 @@
+[console_scripts]
+wg-py=wireguard_tools.cli:main
+

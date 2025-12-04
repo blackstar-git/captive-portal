@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}University Network Access{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}?v=1.2" rel="stylesheet">
+    
+    <!-- Flash Message Color Fix with Animation -->
+    <style>
+    .alert-success {
+        background-color: #198754 !important;
+        border-color: #146c43 !important;
+        color: white !important;
+        animation: slideIn 0.5s ease-out !important;
+    }
+    .alert-danger {
+        background-color: #dc3545 !important;
+        border-color: #b02a37 !important;
+        color: white !important;
+        animation: slideIn 0.5s ease-out !important;
+    }
+    .alert-warning {
+        background-color: #ffc107 !important;
+        border-color: #ffcd39 !important;
+        color: black !important;
+        animation: slideIn 0.5s ease-out !important;
+    }
+    .alert-info {
+        background-color: #0dcaf0 !important;
+        border-color: #0dcaf0 !important;
+        color: black !important;
+        animation: slideIn 0.5s ease-out !important;
+    }
+    
+    /* Slide in animation */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Close button hover effect */
+    .alert .btn-close:hover {
+        transform: scale(1.1);
+        transition: transform 0.2s ease;
+    }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Uni Network Portal</a>
+            <div class="navbar-nav ms-auto">
+                {% if current_user.is_authenticated %}
+                    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="text-muted">University Network Access System &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - University Network{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Welcome, {{ current_user.name }}!</h2>
+    <span class="badge bg-success">Active</span>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Network Access Credentials</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Generate credentials for accessing the university network. You can use these credentials:
+                </p>
+                <ul>
+                    <li><strong>Locally:</strong> Connect to university WiFi and enter credentials at captive portal</li>
+                    <li><strong>Remotely:</strong> Download VPN configuration for secure remote access</li>
+                </ul>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="{{ url_for('generate_credential') }}" class="btn btn-success btn-lg">
+                        <svg width="20" height="20" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                        </svg>
+                        Generate New Credentials
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Your Credentials ({{ credentials|length }}/3)</h5>
+            </div>
+            <div class="card-body">
+                {% if credentials %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>VPN IP</th>
+                                    <th>Status</th>
+                                    <th>Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cred in credentials %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ cred.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">Password: Check your mail</small>
+                                    </td>
+                                    <td>
+                                        <code>{{ cred.client_ip }}</code>
+                                    </td>
+                                    <td>
+                                        {% set time_left = (cred.expires_at - datetime).total_seconds() %}
+
+                                        {% if time_left <= 0 %}
+                                            <span class="badge bg-secondary">Expired</span>
+                                        {% elif not cred.is_used %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Used</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {% set time_left = (cred.expires_at - datetime).total_seconds() %}
+                                            {% set total_time = (cred.expires_at - cred.created_at).total_seconds() %}
+
+                                            {% if time_left > 0 %}
+                                                {% set percent_left = (time_left / total_time * 100) | round %}
+                                                {% set hours_left = (time_left // 3600)|int %}
+                                                {% set minutes_left = ((time_left % 3600) // 60)|int %}
+                                                {% set seconds_left = (time_left % 60)|int %}
+                                            {% else %}
+                                                {% set percent_left = 0 %}
+                                                {% set hours_left = 0 %}
+                                                {% set minutes_left = 0 %}
+                                                {% set seconds_left = 0 %}
+                                            {% endif %}
+
+                                            <div class="progress progress-expiration">
+                                                <div class="progress-bar
+                                                    {% if time_left <= 0 %}bg-secondary
+                                                    {% elif percent_left > 50 %}bg-success
+                                                    {% elif percent_left > 20 %}bg-warning
+                                                    {% else %}bg-danger
+                                                    {% endif %}"
+                                                    role="progressbar"
+                                                    aria-valuenow="{% if time_left <= 0 %}0{% else %}{{ percent_left }}{% endif %}"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100"
+                                                    style="width: {% if time_left <= 0 %}0{% else %}{{ percent_left }}{% endif %}%">
+                                                </div>
+                                            </div>
+
+                                            {% if time_left <= 0 %}
+                                                <span class="text-danger">Expired</span>
+                                            {% else %}
+                                                {{ hours_left }}h {{ minutes_left }}m {{ seconds_left }}s left
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% set time_left = (cred.expires_at - datetime).total_seconds() %}
+                                            
+                                            {% if time_left <= 0 %}
+                                                <!-- Expired credential actions -->
+                                                <a href="{{ url_for('credential_expired', credential_id=cred.id) }}"
+                                                   class="btn btn-outline-warning" title="View Expired Details">
+                                                    Details
+                                                </a>
+                                            {% else %}
+                                                <!-- Active credential actions -->
+                                                <a href="{{ url_for('download_vpn', credential_id=cred.id) }}"
+                                                   class="btn btn-outline-primary" title="QR Code">
+                                                    QR Code
+                                                </a>
+                                                <a href="{{ url_for('download_config_file', credential_id=cred.id) }}"
+                                                   class="btn btn-outline-secondary" title="Download Config">
+                                                    Config
+                                                </a>
+                                            {% endif %}
+                                            
+                                            <a href="{{ url_for('revoke_credential', credential_id=cred.id) }}"
+                                               class="btn btn-outline-danger"
+                                               onclick="return confirm('Revoke this credential?')"
+                                               title="Revoke Access">
+                                                Revoke
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No credentials generated yet.</p>
+                        <a href="{{ url_for('generate_credential') }}" class="btn btn-primary">Generate Your First Credential</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Guide</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>On Campus Access:</h6>
+                    <ol class="small">
+                        <li>Connect to "Uni-WiFi" network</li>
+                        <li>Open browser - you'll see login page</li>
+                        <li>Enter your credentials</li>
+                        <li>Enjoy internet access!</li>
+                    </ol>
+                </div>
+
+                <div class="mb-3">
+                    <h6>Remote VPN Access:</h6>
+                    <ol class="small">
+                        <li>Generate credentials</li>
+                        <li>Download VPN config or scan QR code</li>
+                        <li>Import config in WireGuard app</li>
+                        <li>Connect to university network</li>
+                    </ol>
+                </div>
+
+                <div class="alert alert-info small">
+                    <strong>Note:</strong> Each credential set works for both local and VPN access.
+                    Credentials expire after 6 hours. Expired credentials are automatically removed after 1 hour.
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Email:</strong><br>{{ current_user.email }}</p>
+                <p><strong>Member since:</strong><br>{{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                <p><strong>Total credentials:</strong><br>{{ credentials|length }}/3</p>
+                <p><strong>Active credentials:</strong><br>
+                    {% set active_count = credentials|selectattr('is_used', 'equalto', false)|selectattr('expires_at', 'greaterthan', datetime)|list|length %}
+                    {{ active_count }}
+                </p>
+                <p><strong>Expired credentials:</strong><br>
+                    {% set expired_count = credentials|selectattr('expires_at', 'lessthan', datetime)|list|length %}
+                    {{ expired_count }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress-expiration {
+    height: 6px;
+    margin-bottom: 5px;
+}
+.progress-expiration .progress-bar {
+    transition: width 0.3s ease;
+}
+</style>
+{% endblock %}

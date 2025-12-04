@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}VPN Configuration - University Network{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>WireGuard VPN Configuration</h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">QR Code for Mobile</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="data:image/png;base64,{{ qr_code }}" 
+                             alt="WireGuard QR Code" 
+                             class="img-fluid rounded border"
+                             style="max-width: 300px;">
+                        <p class="mt-3 text-muted">
+                            Scan this QR code with the WireGuard mobile app to automatically configure the VPN.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Configuration Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Username:</strong> {{ credential.username }}<br>
+                            <strong>Client IP:</strong> <code>{{ credential.client_ip }}</code><br>
+                            <strong>Expires:</strong> {{ credential.expires_at.strftime('%Y-%m-%d at %H:%M') }}<br>
+                            <strong>Status:</strong> 
+                                {% if not credential.is_used %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Expired</span>
+                                {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Configuration File:</h6>
+                            <div class="bg-dark text-light p-3 rounded">
+                                <pre class="mb-0"><code class="text-white">{{ config_text }}</code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex">
+                            <a href="{{ url_for('download_config_file', credential_id=credential.id) }}" 
+                               class="btn btn-primary flex-fill">
+                                <svg width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                                Download .conf File
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Setup Instructions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Mobile (Android/iOS):</h6>
+                        <ol class="small">
+                            <li>Install WireGuard app from store</li>
+                            <li>Tap "+" and "Scan from QR Code"</li>
+                            <li>Scan the QR code above</li>
+                            <li>Tap "Add Tunnel" and connect</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Desktop (Windows/Mac/Linux):</h6>
+                        <ol class="small">
+                            <li>Install WireGuard application</li>
+                            <li>Click "Import tunnel(s) from file"</li>
+                            <li>Select the downloaded .conf file</li>
+                            <li>Click "Activate" to connect</li>
+                        </ol>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Troubleshooting:</h6>
+                        <ul class="small">
+                            <li>Ensure your device has internet</li>
+                            <li>Check firewall settings</li>
+                            <li>Verify credential hasn't expired</li>
+                            <li>Contact support if issues persist</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
